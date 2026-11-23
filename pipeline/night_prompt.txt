@@ -1,0 +1,10 @@
+Use your image generation tool. This is a single-image editing task; do not write code.
+
+The attached image is one tile of a seamless illustrated map. Redraw the SAME image at night (about 21:00):
+- Keep every building, street, tree, car and the exact composition, framing and linework in the same pixel positions. Change only the lighting.
+- Deep blue-violet night sky light, buildings in cool shadow.
+- Warm yellow light in a random ~40% of apartment and house windows; streetlights casting soft warm pools along the streets; car headlights/taillights on a few moving cars; shopfronts at street level glowing.
+- Keep the hand-drawn illustration style. Content must touch all four edges, no vignette, no text.
+
+Save/copy the generated PNG to this exact path: OUTPUT_PATH
+Then reply with just the saved path.

@@ -1,0 +1,26 @@
+# dependencies
+node_modules/
+.venv/
+__pycache__/
+
+# secrets
+.key
+.env
+
+# Google-derived and generated data: never commit (licensing + size)
+pipeline/tiles_raw/
+pipeline/tiles_styled/
+pipeline/tiles_night/
+pipeline/aux/
+pipeline/variants/
+pipeline/logs/
+pipeline/*.png
+pipeline/*.npy
+pipeline/*.json
+pipeline/*.last
+pipeline/small_prishtine*.html
+pipeline/google_tile_*.png
+osm-prototype/*.png
+osm-prototype/*.json
+*.log
+.DS_Store

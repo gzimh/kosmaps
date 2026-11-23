@@ -1,0 +1,9 @@
+{
+  "name": "kosmaps",
+  "private": true,
+  "type": "module",
+  "description": "Live illustrated miniature map of Kosovo",
+  "dependencies": {
+    "playwright": "1.57.0"
+  }
+}

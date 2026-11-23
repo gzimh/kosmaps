@@ -1,0 +1,13 @@
+Use your image generation tool. This is a single-image style-transfer task; do not write code.
+
+Two images are attached:
+1. FIRST image: the tile to redraw. An orthographic 45-degree overhead view of part of Prishtinë, Kosovo.
+2. SECOND image: STYLE REFERENCE ONLY. Match its drawing style, palette, linework, shading and level of detail exactly. Do not copy its content or layout.
+
+Redraw the FIRST image as a detailed hand-drawn isometric city illustration in the style of the SECOND image:
+- KEEP the exact composition, framing, camera angle, street layout, building footprints, building heights, parks and trees in the same pixel positions. Content must touch all four edges exactly as in the input; it is one tile of a larger seamless map, so do not add borders, vignettes, or fade the edges.
+- Style: clean ink linework, soft flat watercolour-like shading, warm pastel palette (cream streets, sage-green parks, terracotta roofs on houses, pale concrete on apartment blocks), light from the upper left.
+- No text, no labels, no logos. Square output, as large as the tool allows.
+
+Save/copy the generated PNG to this exact path: OUTPUT_PATH
+Then reply with just the saved path.
