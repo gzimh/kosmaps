@@ -6,6 +6,8 @@ Two images are attached:
 
 Redraw the FIRST image as a detailed hand-drawn isometric city illustration in the style of the SECOND image:
 - KEEP the exact composition, framing, camera angle, street layout, building footprints, building heights, parks and trees in the same pixel positions. Content must touch all four edges exactly as in the input; it is one tile of a larger seamless map, so do not add borders, vignettes, or fade the edges.
+- EMPTY ROADS: draw NO vehicles of any kind (cars, vans, buses, trucks, motorbikes) anywhere on a road, street, lane, intersection, roundabout, bus lane or kerbside parking strip. Where the photo shows a vehicle on the road surface, draw clean empty asphalt with its road markings continuing through. Moving traffic is added later as a separate animated layer.
+- Parked cars inside off-street parking lots, garages and private courtyards may stay.
 - Style: clean ink linework, soft flat watercolour-like shading, warm pastel palette (cream streets, sage-green parks, terracotta roofs on houses, pale concrete on apartment blocks), light from the upper left.
 - No text, no labels, no logos. Square output, as large as the tool allows.
 

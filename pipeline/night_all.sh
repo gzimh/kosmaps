@@ -1,6 +1,7 @@
 #!/bin/bash
 # Generate the night set from the styled day tiles with Codex, N at a time.
 cd "$(dirname "$0")"
+mkdir -p tiles_night logs
 N=${N:-3}
 run() {
   name=$(basename "$1" .png); out=$PWD/tiles_night/$name.png

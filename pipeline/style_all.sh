@@ -1,6 +1,7 @@
 #!/bin/bash
 # Restyle every raw tile with Codex image generation, N at a time.
 cd "$(dirname "$0")"
+mkdir -p tiles_styled logs
 export REF=$PWD/stylized_google.png
 N=${N:-3}
 run() {

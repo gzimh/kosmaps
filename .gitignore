@@ -3,11 +3,19 @@ node_modules/
 .venv/
 __pycache__/
 
+# next.js
+/.next/
+/out/
+next-env.d.ts
+*.tsbuildinfo
+.vercel
+
 # secrets
 .key
 .env
 
 # Google-derived and generated data: never commit (licensing + size)
+/public/data/
 pipeline/tiles_raw/
 pipeline/tiles_styled/
 pipeline/tiles_night/
