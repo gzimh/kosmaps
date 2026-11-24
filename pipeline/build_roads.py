@@ -17,6 +17,7 @@ Outputs:
                other tall pixels are trees, which only dim cars instead of hiding them.
 """
 import json
+import os
 import math
 from collections import defaultdict
 
@@ -102,6 +103,11 @@ DRIVABLE = {
     "tertiary", "tertiary_link", "unclassified", "residential", "living_street", "service",
 }
 SKIP_SERVICE = {"parking_aisle", "driveway", "emergency_access", "drive-through"}
+# Opt-ins for areas unlike Dardania (defaults unchanged):
+#   INCLUDE_PRIVATE=1  private streets are driven too (gated estates such as Marigona: residents drive)
+#   EXTRA_CLASSES=motorway,motorway_link  more highway classes (e.g. a motorway along the map)
+INCLUDE_PRIVATE = os.environ.get("INCLUDE_PRIVATE") == "1"
+DRIVABLE |= {c for c in os.environ.get("EXTRA_CLASSES", "").split(",") if c}
 
 els = json.load(open("osm_area.json"))["elements"]
 nodes = {e["id"]: (e["lat"], e["lon"]) for e in els if e["type"] == "node" and "lat" in e}
@@ -115,7 +121,8 @@ for e in els:
         continue
     if t.get("highway") == "service" and t.get("service") in SKIP_SERVICE:
         continue
-    if t.get("access") in ("no", "private") or t.get("motor_vehicle") == "no":
+    if (t.get("access") == "no" or (t.get("access") == "private" and not INCLUDE_PRIVATE)
+            or t.get("motor_vehicle") == "no"):
         continue
     ids = [i for i in e["nodes"] if i in nodes]
     if len(ids) < 2:

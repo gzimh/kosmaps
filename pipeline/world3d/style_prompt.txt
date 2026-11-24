@@ -1,0 +1,20 @@
+Use your image generation tool. This is a single-image redraw task; do not write code.
+
+Three images are attached, all seen through the SAME camera (orthographic, looking north-east, tilted 45 degrees down); the first two are pixel-aligned with each other:
+1. FIRST image: aerial PHOTO of part of Marigona Residence, a gated villa estate near Prishtinë, Kosovo. The photo is flat (draped on the ground), so buildings show no walls. Use it for what things look like: roof colours and shapes, gardens, lawns, hedges, pools, paving, trees.
+2. SECOND image: 3D MASSING GUIDE of the same area, rendered from map data with the same camera. Use it for GEOMETRY: exactly where each building stands, which walls are visible and where each roof sits. Its plain grey window grids and textures are placeholders — do not copy them.
+3. THIRD image: STYLE REFERENCE ONLY (a finished tile of the same map, another neighbourhood, same camera). Match its drawing style, palette, linework, shading, 3D look and level of detail exactly. Do not copy its content or layout.
+
+BUILDING DATA for this tile (OpenStreetMap + measurements). Use it to reason about each building: its type, number of floors and wall height in pixels. Draw exactly that many storeys (count the window rows), and where the guide and this data disagree on height, follow the data.
+DATA_SHEET
+
+Redraw the area as a detailed hand-drawn 3D isometric city illustration in the style of the THIRD image:
+- Buildings: solid 3D volumes standing on their footprints from the SECOND image, with the floors and heights from the data. Villas are modern family homes, not apartment blocks: white or cream render, large windows and glass doors on the ground floor, a balcony or terrace on the upper floor, flat roofs with a low parapet (keep roof details visible in the photo) or pitched terracotta hip roofs where the data says so. Give the hotel and other named buildings their real character from the photo.
+- Everything else (streets, plots, hedges, gardens, pools, trees) in the same pixel positions as the FIRST and SECOND images; trees as 3D round canopies with soft shadows.
+- KEEP the exact composition and framing. Content must touch all four edges exactly as in the input; it is one tile of a larger seamless map, so do not add borders, vignettes, or fade the edges.
+- NO VEHICLES ANYWHERE: no cars, vans, buses, trucks or motorbikes, moving or parked. Draw clean asphalt with road markings and empty parking bays instead.
+- Style: clean ink linework, soft flat watercolour-like shading, warm pastel palette (cream streets, sage-green gardens, white villas, terracotta roofs), light from the upper left, soft cast shadows to the lower right.
+- No text, no labels, no logos. Square output, as large as the tool allows.
+
+Save/copy the generated PNG to this exact path: OUTPUT_PATH
+Then reply with just the saved path.

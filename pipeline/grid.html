@@ -14,7 +14,7 @@
 <script>
 // One orthographic camera; tiles are produced by sliding it along its own right/up axes.
 // Because the projection is orthographic, adjacent tiles line up exactly in screen space.
-window.setup = async ({ key, lat, lon, widthM, heading, pitch, mode }) => {
+window.setup = async ({ key, lat, lon, widthM, heading, pitch, mode, sse }) => {
   Cesium.GoogleMaps.defaultApiKey = key;
   const dataPass = mode === 'up' || mode === 'hbits';
   const viewer = new Cesium.Viewer('c', {
@@ -27,7 +27,7 @@ window.setup = async ({ key, lat, lon, widthM, heading, pitch, mode }) => {
   viewer.scene.backgroundColor = Cesium.Color.fromCssColorString('#f3ecde');
   viewer.scene.fog.enabled = false;
   const tileset = await Cesium.createGooglePhotorealistic3DTileset();
-  tileset.maximumScreenSpaceError = 4;
+  tileset.maximumScreenSpaceError = sse ?? 4;   // higher = coarser meshes, fewer tile requests
   viewer.scene.primitives.add(tileset);
   if (dataPass) viewer.scene.postProcessStages.fxaa.enabled = false;
   if (mode === 'hbits') {
@@ -115,11 +115,26 @@ window.setup = async ({ key, lat, lon, widthM, heading, pitch, mode }) => {
     right: viewer.camera.right.clone(),
   };
 
-  window.shoot = async (dxM, dyM) => {
+  // Exact camera projection: [[lat, lon, h], ...] -> metres along the home camera's right / up axes
+  // from the target point (screen px = metres / M_PER_PX). Used to place other areas and route
+  // corridors in this camera's frame.
+  window.projectRU = (pts) => {
+    const T = Cesium.Cartesian3.fromDegrees(lon, lat, groundH);
+    return pts.map(([la, lo, h]) => {
+      const d = Cesium.Cartesian3.subtract(Cesium.Cartesian3.fromDegrees(lo, la, h), T, new Cesium.Cartesian3());
+      return [Cesium.Cartesian3.dot(d, home.right), Cesium.Cartesian3.dot(d, home.up)];
+    });
+  };
+
+  // keepLevel: also slide along the view direction by dyM, so the camera keeps its height above the
+  // ground (moving far along the tilted up axis would sink it underground and the near plane would
+  // clip the view). The orthographic image doesn't change.
+  window.shoot = async (dxM, dyM, keepLevel = false) => {
     viewer.camera.setView({ destination: home.position, orientation: { direction: home.direction, up: home.up } });
     viewer.camera.frustum.width = widthM;
     viewer.camera.moveRight(dxM);
     viewer.camera.moveUp(dyM);
+    if (keepLevel) viewer.camera.moveForward(dyM);
     const ok = await loaded();
     await new Promise(r => setTimeout(r, 800));
     return ok;
@@ -127,6 +142,11 @@ window.setup = async ({ key, lat, lon, widthM, heading, pitch, mode }) => {
   window.credits = () => {
     const el = document.querySelector('.cesium-credit-lightbox, .cesium-widget-credits');
     return el ? el.innerText : '';
+  };
+  // Surface heights (m, ellipsoidal) at [[lat, lon], ...]; used by the game's terrain step.
+  window.sampleHeights = async (pts) => {
+    const r = await viewer.scene.sampleHeightMostDetailed(pts.map(([la, lo]) => Cesium.Cartographic.fromDegrees(lo, la)));
+    return r.map((c) => (c && Number.isFinite(c.height) ? c.height : null));
   };
   return groundH;
 };

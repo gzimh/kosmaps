@@ -1,0 +1,11 @@
+Use your image generation tool. This is a single-image repair task; do not write code.
+
+The attached image is a crop of a seamless hand-drawn isometric map at night (warm window and street lights, blue-violet shadows). It was assembled from two drawings that meet along a SEAM_LINE through the middle of the image; along that line the two drawings disagree slightly (a road, field or path changes colour, width or angle where they meet).
+
+Redraw the SAME image so it reads as ONE continuous drawing:
+- Keep everything in the same pixel positions: every road, field boundary, building, tree and path stays exactly where it is, especially near the top and bottom edges.
+- Across the middle, make each road, kerb, field pattern and path continue smoothly with one consistent colour, width and direction, matching the SEAM_SIDE style where the two differ.
+- Same night illustration style, palette, lighting and level of detail; keep lit windows and street lights where they are. No vehicles, no text, no borders; content touches all four edges.
+
+Save/copy the generated PNG to this exact path: OUTPUT_PATH
+Then reply with just the saved path.

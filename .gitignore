@@ -25,6 +25,9 @@ pipeline/logs/
 pipeline/*.png
 pipeline/*.npy
 pipeline/*.json
+# hand-curated, not Google-derived: commit these
+!pipeline/landmarks.json
+!pipeline/bus_schedule.json
 pipeline/*.last
 pipeline/small_prishtine*.html
 pipeline/google_tile_*.png
