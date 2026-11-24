@@ -63,14 +63,14 @@ export interface SignalController {
 }
 
 const RANK: Record<string, number> = {
-  trunk: 6, primary: 5, secondary: 4, tertiary: 3, unclassified: 2, residential: 2, living_street: 1, service: 0,
+  motorway: 7, trunk: 6, primary: 5, secondary: 4, tertiary: 3, unclassified: 2, residential: 2, living_street: 1, service: 0,
 };
 const SPEED_KMH: Record<string, number> = {
-  trunk: 60, primary: 50, secondary: 45, tertiary: 40, unclassified: 35, residential: 30, living_street: 15, service: 20,
+  motorway: 100, trunk: 60, primary: 50, secondary: 45, tertiary: 40, unclassified: 35, residential: 30, living_street: 15, service: 20,
 };
 /** Peak-hour vehicles per km per direction. */
 const DENSITY: Record<string, number> = {
-  trunk: 42, primary: 36, secondary: 30, tertiary: 24, unclassified: 10, residential: 7, living_street: 3, service: 2.5,
+  motorway: 22, trunk: 42, primary: 36, secondary: 30, tertiary: 24, unclassified: 10, residential: 7, living_street: 3, service: 2.5,
 };
 const LANE_WIDTH = 3.1;
 

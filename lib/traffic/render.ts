@@ -1,6 +1,7 @@
 import { gradeColor } from "../map/grade";
 import type { HeightField } from "../map/heightfield";
-import type { FrameUniforms, MapRenderer } from "../map/renderer";
+import type { ViewLike } from "../map/areaView";
+import type { FrameUniforms } from "../map/renderer";
 import type { RoadNetwork } from "./network";
 import type { Car, TrafficSim } from "./sim";
 
@@ -35,6 +36,21 @@ export class TrafficRenderer {
   private pxPerM = 1;
   /** Selected bus and the route to highlight under it. */
   private selection: { carId: number; route: RouteHighlight | null } | null = null;
+  /** Parked cars (static 3D objects from pipeline/build_parking.py). */
+  private parked: Car[] = [];
+  /** Parked cars drawn once into their own layer, redrawn only when the view or light changes. */
+  private parkedLayer: HTMLCanvasElement | null = null;
+  private parkedKey = "";
+
+  setParkedCars(rows: [number, number, number, number, string | null][]) {
+    const palette = ["#f3efe6", "#c9ccd1", "#8e939a", "#2e3136", "#3e5a7e", "#a33f3d", "#e9dcc0", "#5d6e92"];
+    this.parked = rows.map(([e, n, h, head, color], i) => ({
+      id: -1 - i, lane: -1, s: 0, v: 0, acc: 0, next: -1,
+      len: 4.2 + ((i * 37) % 7) / 10, width: 1.8, height: 1.45, kind: "car" as const,
+      color: color ?? palette[i % palette.length], drive: 1, presence: 1, leaving: false, parking: false,
+      stuck: 0, re: e, rn: n, rh: h, rhead: head, visible: 1, parked: true,
+    }));
+  }
 
   setSelection(carId: number | null, route: RouteHighlight | null) {
     this.selection = carId ? { carId, route } : null;
@@ -63,7 +79,7 @@ export class TrafficRenderer {
   constructor(
     private sim: TrafficSim,
     private net: RoadNetwork,
-    private view: MapRenderer,
+    private view: ViewLike,
     private heights: HeightField | null,
   ) {
     // spawn / despawn only where nobody is looking (outside the viewport or the illustration)
@@ -110,6 +126,22 @@ export class TrafficRenderer {
   }
 
   /** Car paint with face shading `k`, graded like the map underneath (sun, weather, smog). */
+  private parkedVisibility(c: Car): number {
+    if (!this.heights) return 1;
+    const cos = Math.cos(c.rhead), sin = Math.sin(c.rhead);
+    let vis = 0;
+    for (const t of [-0.45, 0, 0.45]) {
+      for (const z of [0.4, c.height]) {
+        const [x, y] = this.imagePx(c.re + cos * c.len * t, c.rn + sin * c.len * t, c.rh + z);
+        const surf = this.heights.at(x, y);
+        if (surf === null || surf < c.rh + c.height + 1.2) vis += 1;
+        else if (this.heights.solidAt(x, y)) return 0;
+        else vis += TREE_ALPHA;
+      }
+    }
+    return vis / 6;
+  }
+
   private shade(hex: string, k: number): string {
     let rgb = this.rgbCache.get(hex);
     if (!rgb) { rgb = hexToRgb(hex); this.rgbCache.set(hex, rgb); }
@@ -119,7 +151,7 @@ export class TrafficRenderer {
   }
 
   /** @param dt simulated seconds this frame (larger during a timelapse) */
-  draw(ctx: CanvasRenderingContext2D, dt: number, frame: FrameUniforms) {
+  draw(ctx: CanvasRenderingContext2D, dt: number, frame: FrameUniforms, showMoving = true) {
     this.frame = frame;
     const nightK = frame.nightK;
     const W = this.view.width, H = this.view.height, dpr = this.view.dpr;
@@ -127,7 +159,7 @@ export class TrafficRenderer {
     const smooth = 1 - Math.exp(-Math.min(dt, 0.1) * 14);
 
     const items: { c: Car; y: number }[] = [];
-    for (const c of this.sim.cars) {
+    for (const c of showMoving ? this.sim.cars : []) {
       const ln = this.net.lanes[c.lane];
       const p = this.net.sample(ln, c.s);
       // smooth position/heading so lane changes at junctions glide instead of jumping
@@ -158,6 +190,18 @@ export class TrafficRenderer {
     ctx.rect(cx0, cy0, cx1 - cx0, cy1 - cy0);
     ctx.clip();
     const npx = this.net.file.npx;
+    // parked cars never move: draw them into a cached layer and reuse it until the view, size or
+    // lighting changes (thousands of cars otherwise get redrawn every frame)
+    if (this.parked.length) {
+      const q = (v: number) => Math.round(v * 50) / 50;
+      const key = [W, H, this.view.off[0].toFixed(2), this.view.off[1].toFixed(2), this.view.scale.toFixed(4),
+        q(frame.nightK), q(frame.rain), q(frame.snow), q(frame.smog), this.heights?.loadedCount ?? 0].join("|");
+      if (key !== this.parkedKey) {
+        this.parkedKey = key;
+        this.drawParked(W, H, pxPerM, nightK, lw);
+      }
+      ctx.drawImage(this.parkedLayer!, 0, 0);
+    }
     if (this.selection?.route) this.drawRoute(ctx, this.selection.route, dpr);
     for (const { c } of items) {
       const alpha = c.presence * c.visible;
@@ -179,13 +223,39 @@ export class TrafficRenderer {
       ctx.globalCompositeOperation = "lighter";
       for (const { c } of items) {
         const alpha = c.presence * c.visible;
-        if (alpha < 0.02) continue;
+        if (alpha < 0.02 || c.parked) continue;
         this.drawHeadlights(ctx, c, nightK * alpha, pxPerM);
       }
       ctx.globalCompositeOperation = "source-over";
     }
     ctx.globalAlpha = 1;
     ctx.restore();
+  }
+
+  private drawParked(W: number, H: number, pxPerM: number, nightK: number, lw: number) {
+    if (!this.parkedLayer) this.parkedLayer = document.createElement("canvas");
+    const layer = this.parkedLayer;
+    if (layer.width !== W || layer.height !== H) { layer.width = W; layer.height = H; }
+    const pctx = layer.getContext("2d")!;
+    pctx.clearRect(0, 0, W, H);
+    const items: { c: Car; y: number }[] = [];
+    for (const c of this.parked) {
+      const [x, y] = this.proj(c.re, c.rn, c.rh);
+      if (x < -40 || y < -40 || x > W + 40 || y > H + 40) continue;
+      // a parked car partly behind a building is hidden outright (no ghost over the roof); under
+      // trees it is dimmed
+      if (pxPerM > 0.6) c.visible = this.parkedVisibility(c);
+      items.push({ c, y });
+    }
+    items.sort((a, b) => a.y - b.y);
+    const npx = this.net.file.npx;
+    for (const { c } of items) {
+      if (c.visible < 0.02) continue;
+      pctx.globalAlpha = c.visible;
+      this.far = 1 - this.imagePx(c.re, c.rn, c.rh)[1] / npx;
+      this.drawCar(pctx, c, nightK, lw);
+    }
+    pctx.globalAlpha = 1;
   }
 
   private box(c: Car, x0: number, x1: number, w: number, z0: number, z1: number): { base: P2[]; top: P2[]; normals: P2[] } {
@@ -300,6 +370,16 @@ export class TrafficRenderer {
 
   private drawCar(ctx: CanvasRenderingContext2D, c: Car, night: number, lw: number) {
     const L = c.len / 2, w = c.width / 2;
+    if (this.pxPerM < 0.8) {
+      // zoomed out, a car is a few pixels: one roof shape instead of ~6 shaded faces
+      const top = this.box(c, -L, L, w, c.height * 0.8, c.height * 0.8).top;
+      ctx.fillStyle = c.kind === "bus" ? this.shade(BUS_BODY, 1) : this.shade(c.color, 0.9);
+      ctx.beginPath();
+      top.forEach((p, i) => (i ? ctx.lineTo(...p) : ctx.moveTo(...p)));
+      ctx.closePath();
+      ctx.fill();
+      return;
+    }
     if (c.kind === "bus") {
       this.drawBus(ctx, c, lw);
     } else if (c.kind === "van") {
@@ -314,7 +394,7 @@ export class TrafficRenderer {
     }
     // brake / tail lights
     const braking = c.acc < -1.2 && c.v > 0.3;
-    if (braking || night > 0.3) {
+    if (!c.parked && (braking || night > 0.3)) {
       const cos = Math.cos(c.rhead), sin = Math.sin(c.rhead);
       ctx.fillStyle = braking ? "#ff3b2f" : "#c8352b";
       for (const side of [-1, 1]) {

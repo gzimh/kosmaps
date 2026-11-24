@@ -257,3 +257,33 @@
 .stopNext {
   font-weight: 700;
 }
+
+/* ---------------------------------------------------------------- landmarks */
+.landmark {
+  margin: 8px 0 2px;
+  padding-top: 8px;
+  border-top: 1px solid #ffffff1f;
+}
+.landmark p {
+  font-size: 14px;
+}
+.linkList {
+  list-style: none;
+  padding: 0;
+  margin: 4px 0 0;
+  font: 13px/1.35 -apple-system, system-ui, sans-serif;
+}
+.linkList li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 3px 0;
+}
+.linkList a {
+  color: #f3ece0;
+}
+.linkSource {
+  color: #a99d8c;
+  font-size: 11px;
+  white-space: nowrap;
+}

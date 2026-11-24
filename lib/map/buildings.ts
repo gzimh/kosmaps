@@ -1,5 +1,5 @@
 import type { Building, BuildingsFile } from "../types";
-import type { MapRenderer } from "./renderer";
+import type { ViewLike } from "./areaView";
 import type { TiledData } from "./tiles";
 
 const S2 = Math.SQRT1_2;
@@ -46,7 +46,7 @@ export class BuildingOverlay {
   private sctx = this.scratch.getContext("2d")!;
   private ctx: CanvasRenderingContext2D;
 
-  constructor(private canvas: HTMLCanvasElement, private file: BuildingsFile, private view: MapRenderer) {
+  constructor(private canvas: HTMLCanvasElement, private file: BuildingsFile, private view: ViewLike) {
     this.ctx = canvas.getContext("2d")!;
   }
 

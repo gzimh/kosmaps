@@ -48,6 +48,8 @@ export interface Car {
   bus?: BusDrive;
   /** Text painted on the roof (a bus's line number). */
   label?: string;
+  /** A parked car: static scenery, drawn like traffic but never simulated (no lights at night). */
+  parked?: boolean;
   /** Smoothed render state (hides the small hop between lane offsets at junctions). */
   re: number; rn: number; rh: number; rhead: number;
   visible: number;
@@ -81,6 +83,8 @@ export class TrafficSim {
   private time = 0;
   private spawnClock = 0;
   private demandOverride: number | null = null;
+  /** Scales how many cars are simulated (lower on phones). */
+  densityScale = 1;
   /** Road classes currently above their share of the target (cars there may park). */
   private surplus = new Set<string>();
   private seed = 12345;
@@ -136,7 +140,7 @@ export class TrafficSim {
 
   /** Populate the network immediately (no warm-up) for the given demand. */
   seedCars(inputs: SimInputs) {
-    const demand = this.demandOverride ?? inputs.demand;
+    const demand = (this.demandOverride ?? inputs.demand) * this.densityScale;
     const weights = this.net.lanes.map((ln) => ln.len * ln.density);
     const sum = weights.reduce((a, b) => a + b, 0);
     const target = this.targetCount(demand);
@@ -254,7 +258,7 @@ export class TrafficSim {
     const dt = Math.min(dtReal, 0.1);
     if (dt <= 0) return;
     this.time += dt;
-    const demand = this.demandOverride ?? inputs.demand;
+    const demand = (this.demandOverride ?? inputs.demand) * this.densityScale;
     const lanes = this.net.lanes;
 
     for (const list of this.byLane) list.sort((a, b) => a.s - b.s);

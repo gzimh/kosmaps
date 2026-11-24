@@ -9,6 +9,11 @@ import type { TiledData } from "./tiles";
 export class HeightField {
   constructor(readonly tiles: TiledData) {}
 
+  /** Grows as height tiles arrive (cached drawings that depend on heights can refresh). */
+  get loadedCount() {
+    return this.tiles.loadedCount;
+  }
+
   /** Surface height (m) at a mosaic pixel, or null if unknown / not loaded yet. */
   at(ix: number, iy: number): number | null {
     const p = this.tiles.rgb(ix, iy);

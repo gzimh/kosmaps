@@ -44,9 +44,11 @@ npm run build      # production build; also: npm run lint, npm run typecheck
 The app reads its layers from `public/data/` (produced by the last pipeline step): `meta.json`,
 small JSON files (buildings, roads, buses, traffic profile) and tiles:
 
-- **Imagery pyramids** `tiles/{day,night,up}/<z>/<x>_<y>.webp`: 512 px tiles (+2 px gutter copied
-  from neighbours, so filtering shows no seams), level `maxZ` at full resolution and each level
-  below at half the previous. The viewer draws only tiles in view, at the level matching the
+- **Imagery pyramids** `tiles/<version>/{day,night,up}/<z>/<x>_<y>.{avif,webp}`: 512 px tiles
+  (+2 px gutter copied from neighbours, so filtering shows no seams), each level double the
+  previous. Day and night go to 2× the mosaic (Real-ESRGAN); the smooth sky-facing mask is half
+  resolution. AVIF where the browser decodes it (~30% smaller), WebP otherwise. Each export gets a
+  new version folder, so tiles are served with a one-year immutable cache (`next.config.ts`). The viewer draws only tiles in view, at the level matching the
   zoom, coarse to fine (a coarser tile covers anything still loading), fetches only the layers
   the current conditions need (no night tiles at noon, no wet/snow mask when dry), decodes off the
   main thread and keeps at most 160 tiles on the GPU.
@@ -77,9 +79,10 @@ All steps run from `pipeline/`. Outputs land next to the scripts and are git-ign
 | 1 | Render overlapping Google 3D tiles (ortho, heading 45°, pitch −45°, 0.2 m/px) | `node grid.mjs 1 [lat] [lon]` | `tiles_raw/` |
 | 2 | Style reference: restyle one tile once (see `style_tile_prompt.txt`), save as `stylized_google.png` | Codex, manual | `stylized_google.png` |
 | 3 | Restyle every tile (day) | `N=3 ./style_all.sh` | `tiles_styled/` |
-| 4 | Stitch day mosaic with min-cost seams | `python stitch.py` | `mosaic_styled.png`, `*_seams.json` |
+| 4 | Even out colour between neighbouring tiles, then stitch the day mosaic with min-cost seams | `python color_match.py tiles_styled tiles_styled_cm && python stitch.py tiles_styled_cm` | `mosaic_styled.png`, `*_seams.json` |
 | 5 | Night set generated from the day tiles | `N=3 ./night_all.sh` | `tiles_night/` |
-| 6 | Stitch night along the *same* seams | `python stitch.py tiles_night mosaic_night.png mosaic_styled_seams.json` | `mosaic_night.png` |
+| 6 | Colour-match and stitch night along its own best seams | `python color_match.py tiles_night tiles_night_cm && python stitch.py tiles_night_cm mosaic_night.png -` | `mosaic_night.png` |
+| 6b | 2× Real-ESRGAN upscale for the closest zoom (needs `realesrgan-ncnn-vulkan` in `~/tools/realesrgan`) | `python upscale.py mosaic_styled.png mosaic_styled_2x.png` (and night) | `mosaic_*_2x.png` |
 | 7 | Sky-facing mask (rain sheen, snow) | `node aux_pass.mjs` then `python stitch.py aux mosaic_up.png mosaic_styled_seams.json "up_{c}_{r}.png"` | `mosaic_up.png` |
 | 8 | Height pass (12-bit, 1/16 m) and decode | `node height_pass.mjs && python decode_height.py` | `height_mosaic.npy` |
 | 9 | OpenStreetMap buildings/POIs/roads for the area | Overpass query (see below) | `osm_area.json` |
@@ -92,7 +95,9 @@ All steps run from `pipeline/`. Outputs land next to the scripts and are git-ign
 | 16 | Weekly traffic profile for the simulation | `python build_traffic_profile.py` | `traffic_profile.json` |
 | 17 | Bus routes and stops for Prishtinë (Overpass queries in `build_buses.py`) | Overpass | `bus_routes.json`, `bus_stops.json` |
 | 18 | Bus lines: routes matched onto the lane graph, stops placed, timetable merged | `python build_buses.py` | `buses.json` |
-| 19 | Export layers, buildings, roads, profile and buses for the web app | `python export_web.py` | `../public/data/` |
+| 19 | Parked cars as 3D objects (needs a restyle that still drew cars, e.g. the v1 mosaic) | `python build_parking.py mosaic_with_cars.png mosaic_styled.png` | `parked_cars.json` |
+| 20 | Export the area's layers, buildings, roads, profile, buses and parked cars | `python export_web.py ../public/data/areas/dardania` | `public/data/areas/dardania/` |
+| 21 | One map: the areas + the road between them (see "World map") | `node corridor.mjs` + `python build_worldmap.py` | `public/data/meta.json`, `tiles/` |
 
 Overpass query used for step 9 (bbox around the 3×3 grid):
 
@@ -121,6 +126,45 @@ Overpass query for step 13:
 node[highway~"^(traffic_signals|stop|give_way|crossing)$"](42.6445,21.1455,42.6605,21.1675);
 out body;
 ```
+
+## World map: Dardania, Marigona and the road between them
+
+The home page (`/`) shows every area in one map. Each area is exported on its own
+(`export_web.py ../public/data/areas/<id>`: buildings, roads, traffic, parked cars, landmarks and
+the building-id / height data tiles); the world map then merges their imagery with the road
+between them into one sparse tile pyramid.
+
+1. `node corridor.mjs <work_dir> <areas.json>` renders **raw Google 3D tiles** (no restyle) in a
+   band ±60 m around the driving route between the areas (one Routes API call), in Dardania's
+   camera frame, so they line up with it exactly. It also places the other areas in that frame
+   (Marigona's mosaic origin is at world px ≈ 12074, 27700). Away from the road the map is blank.
+2. `python build_worldmap.py <world.json>` writes `public/data/meta.json` (world size, home view,
+   areas with their data folder and offset, and an index of which tiles exist) and the RGBA tile
+   pyramid. The illustrated areas win over the raw corridor where they overlap; the corridor has
+   no 2× level (the viewer uses its 1× tiles there) and its night is a colour grade of the photo.
+
+3. Optional city background: `node region.mjs <work_dir> <region.json>` renders raw Google 3D
+   tiles over a whole lat/lon polygon at a coarser detail (0.8 m/px, 4× coarser than the areas;
+   `sse: 8` loads coarser meshes, which looks the same at that scale and is ~2× faster). For
+   Prishtinë plus Marigona: a 14.6 × 14.6 km square, 274 cells, ~35 min, one 3D Tiles session.
+   Run it with one worker: parallel workers hit Google's per-minute limit (HTTP 429).
+   `build_worldmap.py` puts it under everything (`"background": "<work_dir>"`); the viewer falls
+   back to the finest level that exists at each spot, so the city stays at its own detail while
+   the illustrated areas and the road go finer.
+
+`areas.json` / `world.json` live in the work dir (`.context/world/`); example:
+
+```json
+{"corridor": ".context/world",
+ "areas": [{"id": "dardania", "name": "Dardania", "dir": "<work dir with mosaic_*.png>", "data": "/data/areas/dardania"},
+           {"id": "marigona", "name": "Marigona", "dir": ".context/marigona/world3d", "data": "/data/areas/marigona"}],
+ "background": ".context/city",
+ "home": ["background"]}
+```
+
+In the viewer each area keeps its own pixel frame (`AreaView` offsets it into the world), its own
+traffic simulation, buses, parked cars, clickable buildings and landmarks. The panel has buttons to
+jump to each area; "Reset view" shows both.
 
 ## Simulated traffic
 
@@ -166,6 +210,16 @@ out body;
 - **Click a bus** for its line, direction, punctuality, next stop and every stop with its time;
   the line's path and stops are highlighted on the map.
 
+### Landmarks
+
+`pipeline/landmarks.json` (committed) lists the notable places in the map area, researched from
+Wikipedia (English first, Albanian where there is no English article), Wikidata and OpenStreetMap:
+a short summary written for the map and links to the articles. Each is anchored to a clickable
+building (its OSM way) or a label point; `export_web.py` resolves the anchors to map positions.
+The map shows them as labels; clicking one opens a panel (or adds a "Read more" section to the
+building's card). `#l=<id>` links open a landmark directly. Places whose online sources didn't
+check out (e.g. a hospital whose Wikipedia coordinates were 1.5 km away) were left out.
+
 ### Play a day (timelapse)
 
 "▶ Play a day" runs the clock 24 h in 30 s. Traffic runs 25× faster than real time (eased in and
@@ -180,6 +234,81 @@ Prishtinë, which is what the one-time harvest uses. The profile is Google-deriv
 tiles it lives in git-ignored `public/data/` and is not committed. `TrafficSim.setDemandOverride()`
 remains the hook for a live congestion index.
 
+## Marigona Residence: built from data (now part of the world map)
+
+Google has no 3D buildings for Marigona Residence (Preoc, Graçanica): its 3D tiles there are flat
+terrain with an aerial photo (max 4 m of relief over the estate), so the Dardania approach (render
+Google's meshes at 45°, restyle) has nothing to render. Instead `/marigona` builds the estate in 3D
+(three.js) from data and shows it through the same camera as the Dardania map: orthographic,
+heading 45°, pitch −45°, pan and zoom.
+
+| What | From |
+|---|---|
+| Ground and roof art | straight-down orthophoto rendered from Google's tiles (0.2 m/px) |
+| Building footprints | OpenStreetMap |
+| Building heights | the photo: shadow length + how far each roof leans away from its footprint, both scaled so a typical villa is 7 m; published floor counts for named buildings the photo can't measure (`KNOWN` in `build_world.py`) |
+| Roof shape | hip roof where the photo shows terracotta on a rectangular footprint, else flat |
+| Streets, pavements | OSM centre lines and widths (asphalt, centre lines, kerbs) |
+| Trees | dark-green canopy blobs found in the photo, with the photo's colour and size |
+| Pools, place labels | OSM |
+| Terrain | heights sampled from Google's 3D surface |
+| Light | real sun position for the chosen time; lit windows, street lamps and car lights at night |
+
+The photo is not a true orthophoto: every roof is drawn shifted away from the camera by an amount
+proportional to its height. The builder finds that shift per building (sliding the footprint outline
+over the photo's edges along the shared lean direction), takes each roof's art from where the photo
+drew it, measures height from it, and fills the ground the photo's roofs covered with ground cloned
+from just beyond. Shadows baked into the photo are lifted to match the sunlit ground around them.
+
+Simulated: ~70 cars on the OSM road graph (car following, slowing for turns, one car at a time
+through junctions) and ~150 people on footpaths and pavements. Click a building for its data and how
+its height was found.
+
+```bash
+cd pipeline
+node world3d/ortho.mjs 42.5845 21.1100 8 ../.context/marigona/world3d 0.2 8   # ~10 min: 64 photo tiles + terrain grid
+../.venv/bin/python world3d/build_world.py ../.context/marigona/world3d ../public/data/world3d/marigona
+```
+
+Output (git-ignored, Google-derived): `public/data/world3d/marigona/{world.json, roofs.jpg, ground/*.jpg}`.
+
+**Illustrated tiles (the Dardania look) for a flat area.** The image model can stand flat buildings up
+if it is told where they are and how tall: each raw 45° tile (`grid.mjs`) goes to Codex with the
+3D scene above rendered through the identical camera as a geometry guide (`world3d/guides.mjs`, needs
+the app running), a finished Dardania tile as style reference, and a per-tile data sheet listing every
+building's pixel position, type, floors, height and roof (`world3d/tile_brief.py`). Villa heights
+are smoothed over each villa's 9 nearest neighbours and snapped to whole floors (two at least: the
+per-villa photo measurement is noisy, the estate is two-storey houses). Then stitch as for Dardania.
+
+**Live map with Dardania parity (in the world map on `/`).** The same viewer as Dardania: day/night, rain, snow, smog, clickable buildings, landmarks, simulated
+traffic and parked cars, play-a-day, 2× upscaled close zoom. The data-built 3D scene moved to
+`/marigona/3d`; the pipeline renders from it. Steps, in the work dir (`.context/marigona/world3d`),
+after the restyle above:
+
+| Step | Command (scripts in `pipeline/`, run from the work dir) | Why |
+|---|---|---|
+| Align each styled tile to the source geometry | `world3d/align_tiles.py tiles_styled tiles_raw tiles_aligned <world.json>` | the model drifts up to ~70 px; anchored on OSM roads and the 3D guide |
+| Make neighbours agree in their shared margins | `world3d/seam_align.py tiles_aligned tiles_seamed 3` | roads meet across seams (mean residual 0.2 px) |
+| Colour-match + stitch (as Dardania) | `color_match.py tiles_seamed tiles_styled_cm && stitch.py tiles_styled_cm mosaic_styled.png` | |
+| Repair seams where two drawings disagree in style | `world3d/seam_repair.py score tiles_styled_cm roads.json 23` then `… run mosaic_styled.png mosaic_styled_fixed.png world3d/seam_prompt.txt` | Codex redraws a 768 px crop across the seam; only the seam band is blended in |
+| Night: Codex from the aligned day tiles, then align/seam/colour/stitch/repair the same way | `world3d/night_all.sh <work_dir> tiles_seamed` | |
+| 2× Real-ESRGAN for close zoom | `upscale.py mosaic_styled.png mosaic_styled_2x.png` (and night) | |
+| Data passes from the 3D scene (sky-facing mask, 12-bit height) | `node world3d/passes.mjs . http://localhost:3000/marigona/3d && python world3d/passes_decode.py` | stand-in for `aux_pass.mjs` + `height_pass.mjs` (Google is flat here) |
+| OSM extracts | Overpass, the Dardania queries with the area's bbox | Marigona is outside Prishtinë's boundary: bus routes found by `rel(bw)` on the bbox's roads (none use the estate) |
+| Buildings, roads (private estate streets + motorway), sky mask | `build_buildings.py`, `INCLUDE_PRIVATE=1 EXTRA_CLASSES=motorway,motorway_link build_roads.py`, `stitch.py aux mosaic_up.png mosaic_styled_seams.json "up_{c}_{r}.png"` | |
+| Parked cars from the orthophoto | `world3d/parked_from_ortho.py <world.json>` | Dardania's detector needs 3D bumps and an older restyle with cars |
+| Landmarks, traffic profile, export | `cp world3d/landmarks_marigona.json landmarks.json`, Dardania's `traffic_profile.json`, `export_web.py ../public/data/areas/marigona` | |
+
+```bash
+cd pipeline
+node grid.mjs 2 42.584306 21.109356                     # raw 45° tiles (move tiles_raw/ into the work dir)
+node world3d/guides.mjs ../.context/marigona/world3d http://localhost:3000/marigona/3d
+N=3 world3d/style_all.sh ../.context/marigona/world3d ../public/data/world3d/marigona/world.json <style_ref.png>   # ~20 min for 25 tiles
+cd ../.context/marigona/world3d && ../../../.venv/bin/python ../../../pipeline/stitch.py tiles_styled mosaic_styled.png
+```
+Before rendering a new area, check whether Google has building meshes there at all (sample heights
+with `sampleHeightMostDetailed`): areas with real meshes suit the illustrated Dardania pipeline instead.
+
 ## Key ideas
 
 - **Exact camera.** Orthographic, heading 45°, pitch −45°, so any (east, north, height) maps to a
@@ -193,9 +322,12 @@ remains the hook for a live congestion index.
   bit-planes so no colour transform can corrupt it) give per-pixel geometry for free.
 - **Day/night.** Only night needs its own generation; dusk, rain, snow and smog are shader
   effects over the two sets. (Cloud cover and a golden-hour grade were tried and removed for now.)
-- **Empty roads.** The restyle and night prompts tell the model to draw no vehicles on any road
-  surface (parked cars in off-street lots may stay), because moving traffic is a live simulated
-  layer. The style reference image may still contain cars; the prompt overrides it.
+- **No vehicles in the art.** The restyle and night prompts draw no vehicles at all, moving or
+  parked: traffic is simulated and parked cars are 3D objects, so everything with wheels keeps the
+  same 3D look. Parked cars are found where the city really had them: a cell counts as a car when
+  the 3D capture has a low car-height bump there, it's not a building or greenery, and an older
+  restyle that still drew cars drew one there (`build_parking.py`). They're drawn into a cached
+  layer, so 2,300 of them cost nothing per frame.
 
 ## Cost notes
 

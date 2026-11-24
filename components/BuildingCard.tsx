@@ -1,13 +1,13 @@
 import type { Building } from "@/lib/types";
 import styles from "./LiveMap.module.css";
 
-export default function BuildingCard({ building: b, onClose }: { building: Building; onClose: () => void }) {
+export default function BuildingCard({ building: b, onClose, children }: { building: Building; onClose: () => void; children?: React.ReactNode }) {
   return (
     <div className={styles.card}>
       <button className={styles.close} title="Close" onClick={onClose}>
         ✕
       </button>
-      <div className={styles.kicker}>SELECTED</div>
+      <div className={styles.kicker}>{children ? "LANDMARK" : "SELECTED"}</div>
       <h2>{b.name || b.use}</h2>
       {b.addr && <p>{b.addr}</p>}
       <p>
@@ -36,6 +36,7 @@ export default function BuildingCard({ building: b, onClose }: { building: Build
           </ul>
         </>
       )}
+      {children}
       <div className={styles.source}>
         Outline, name, address, use: OpenStreetMap. Height: measured from Google 3D tiles (private prototype
         only).{" "}

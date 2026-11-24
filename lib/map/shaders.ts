@@ -18,13 +18,15 @@ precision highp float;
 out vec4 o;
 uniform sampler2D uDay, uNight, uUp;
 uniform vec2 uTileOrigin; // mosaic px at the tile's top-left content pixel
-uniform float uTileF;     // mosaic px per tile px (2^(maxZ - z))
+uniform float uTileF;     // mosaic px per tile px at this level
 uniform vec2 uTexSize;    // texture size in px, gutter included
 uniform float uGutter;
+uniform vec2 uUpOrigin;   // the sky-facing mask has its own (coarser) pyramid
+uniform float uUpF;
+uniform vec2 uUpTexSize;
 uniform vec2 uRes;       // canvas px
 uniform vec2 uOff;       // image px at canvas origin
 uniform float uScale;    // canvas px per image px
-uniform float uImg;      // image size px
 uniform float uNightK, uRain, uSnow, uSmog, uTime;
 
 float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7))) * 43758.5453); }
@@ -40,10 +42,15 @@ void main(){
   vec2 frag = vec2(gl_FragCoord.x, uRes.y - gl_FragCoord.y);
   vec2 ip = uOff + frag / uScale;                // image pixel
   vec2 tuv = (uGutter + (ip - uTileOrigin) / uTileF) / uTexSize;
-  vec3 day = texture(uDay, tuv).rgb;
+  vec4 day4 = texture(uDay, tuv);
+  // the map's edges are hard cuts, but lossy (AVIF) alpha and filtering soften them into a fringe:
+  // threshold it back to a clean edge
+  day4.a = smoothstep(0.42, 0.58, day4.a);
+  if (day4.a < 0.004) discard;                   // blank (no map here): show what's underneath
+  vec3 day = day4.rgb;
   vec3 night = texture(uNight, tuv).rgb;
-  float up = texture(uUp, tuv).r;
-  float far = 1. - ip.y / uImg;                  // top of image is farther from the camera
+  float up = texture(uUp, (uGutter + (ip - uUpOrigin) / uUpF) / uUpTexSize).r;
+  float far = 1. - frag.y / uRes.y;              // top of the screen is farther from the camera
 
   // 1. sun: blend from the day layer to the baked night layer
   vec3 col = mix(day, night, uNightK);
@@ -72,5 +79,5 @@ void main(){
   float k = uSmog * (.62 + .38 * far) * (.9 + .2 * fbm(ip / 900. + uTime * .01)) * mix(1., .55, uNightK);
   col = mix(sat(col, 1. - .3 * uSmog), haze, clamp(k, 0., .6));
 
-  o = vec4(clamp(col, 0., 1.), 1.);
+  o = vec4(clamp(col, 0., 1.), day4.a);
 }`;

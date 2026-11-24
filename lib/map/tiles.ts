@@ -77,6 +77,8 @@ export interface DataTileInfo {
  */
 export class TiledData {
   private tiles = new Map<number, { d: Uint8ClampedArray; w: number; h: number } | null>();   // null = loading
+  /** Number of tiles loaded so far (lets callers notice new data arriving). */
+  loadedCount = 0;
 
   constructor(private loader: TileLoader, private baseUrl: string, private info: DataTileInfo) {}
 
@@ -95,6 +97,7 @@ export class TiledData {
       const ctx = c.getContext("2d", { willReadFrequently: true, colorSpace: "srgb" })!;
       ctx.drawImage(bmp, 0, 0);
       this.tiles.set(k, { d: ctx.getImageData(0, 0, bmp.width, bmp.height).data, w: bmp.width, h: bmp.height });
+      this.loadedCount++;
       bmp.close();
     });
   }
