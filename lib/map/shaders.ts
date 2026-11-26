@@ -37,7 +37,6 @@ float vnoise(vec2 p){
 float fbm(vec2 p){ float a=.5, s=0.; for(int k=0;k<4;k++){ s+=a*vnoise(p); p*=2.03; a*=.5; } return s; }
 float luma(vec3 c){ return dot(c, vec3(.299,.587,.114)); }
 vec3 sat(vec3 c, float k){ float l = luma(c); return mix(vec3(l), c, k); }
-
 void main(){
   vec2 frag = vec2(gl_FragCoord.x, uRes.y - gl_FragCoord.y);
   vec2 ip = uOff + frag / uScale;                // image pixel
@@ -79,5 +78,33 @@ void main(){
   float k = uSmog * (.62 + .38 * far) * (.9 + .2 * fbm(ip / 900. + uTime * .01)) * mix(1., .55, uNightK);
   col = mix(sat(col, 1. - .3 * uSmog), haze, clamp(k, 0., .6));
 
-  o = vec4(clamp(col, 0., 1.), day4.a);
+  float a = day4.a;
+  o = vec4(clamp(col, 0., 1.) * a, a);           // premultiplied alpha
+}`;
+
+
+/**
+ * The surroundings under the illustration: a raw Google render (pipeline/backdrop.py), shown as it
+ * is, with the night and weather applied in a simpler form than on the tiles.
+ */
+export const BACKDROP_SHADER = `#version 300 es
+precision highp float;
+out vec4 o;
+uniform sampler2D uTex;
+uniform vec4 uBack;      // image px covered by the texture: x0, y0, x1, y1
+uniform vec2 uRes, uOff;
+uniform float uScale, uNightK, uRain, uSnow, uSmog;
+float luma(vec3 c){ return dot(c, vec3(.299,.587,.114)); }
+void main(){
+  vec2 frag = vec2(gl_FragCoord.x, uRes.y - gl_FragCoord.y);
+  vec2 ip = uOff + frag / uScale;
+  vec3 col = texture(uTex, (ip - uBack.xy) / (uBack.zw - uBack.xy)).rgb;
+  float far = 1. - frag.y / uRes.y;
+  // night: moonlit and blue like the baked night illustration, no street lights out here
+  col = mix(col, mix(vec3(luma(col)), col, .35) * vec3(.20,.24,.42), uNightK);
+  col = mix(col, mix(vec3(luma(col)), col, .5) * vec3(.82,.86,.94) * .8, uRain);
+  col = mix(col, vec3(.95,.97,1.) * mix(1., .3, uNightK), uSnow * .55);
+  vec3 haze = mix(vec3(.78,.74,.66), vec3(.26,.21,.18), uNightK);
+  col = mix(col, haze, clamp(uSmog * (.62 + .38 * far) * mix(1., .55, uNightK), 0., .6));
+  o = vec4(col, 1.);
 }`;

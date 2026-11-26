@@ -24,11 +24,9 @@ interface Props {
   /** null when the map has no road data (traffic layer unavailable). */
   traffic: { on: boolean; onToggle: () => void } | null;
   title?: string;
-  /** Jump-to buttons for the map's areas. */
-  places?: { name: string; onGo: () => void }[];
 }
 
-export default function ControlPanel({ status, conditions, live, playing, onChange, onLive, onTogglePlay, onHome, onHide, traffic, title = "Small Prishtinë", places = [] }: Props) {
+export default function ControlPanel({ status, conditions, live, playing, onChange, onLive, onTogglePlay, onHome, onHide, traffic, title = "Marigona" }: Props) {
   return (
     <div className={styles.panel}>
       <button className={styles.close} title="Hide" onClick={onHide}>
@@ -64,11 +62,6 @@ export default function ControlPanel({ status, conditions, live, playing, onChan
         <button className={styles.button} onClick={onHome}>
           Reset view
         </button>
-        {places.map((p) => (
-          <button key={p.name} className={styles.button} onClick={p.onGo} title={`Zoom to ${p.name}`}>
-            {p.name}
-          </button>
-        ))}
         {traffic && (
           <button className={`${styles.button} ${traffic.on ? styles.on : ""}`} onClick={traffic.onToggle} title="Simulated traffic">
             Traffic

@@ -1,190 +1,29 @@
 {
- "about": "Landmarks in the map area, researched in November 2026 from Wikipedia (English first, Albanian where there is no English article), Wikidata and OpenStreetMap. Summaries are written for this map from those sources; follow the links for the full articles. Anchors: 'osm' = a clickable building (its OSM way), otherwise a label point.",
- "landmarks": [
-  {
-   "id": "ptk",
-   "name": "PTK headquarters",
-   "local": "Posta dhe Telekomi i Kosovës",
-   "kind": "Company headquarters",
-   "anchor": {"osm": "way/105505532"},
-   "summary": "Head office of PTK, Kosovo's public post and telecommunications company. Its telecom arm, Telecom of Kosovo (trading as Vala), is the country's main fixed-line and internet provider; the postal service was split off as Posta e Kosovës in 2011–2012.",
-   "links": [
-    {"title": "Post and Telecom of Kosovo", "url": "https://en.wikipedia.org/wiki/Post_and_Telecom_of_Kosovo", "lang": "en"},
-    {"title": "Telecom of Kosovo", "url": "https://en.wikipedia.org/wiki/Telecom_of_Kosovo", "lang": "en"},
-    {"title": "Posta e Kosovës", "url": "https://sq.wikipedia.org/wiki/Posta_e_Kos%C3%ABv%C3%ABs", "lang": "sq"}
-   ]
-  },
-  {
-   "id": "clinton_blvd",
-   "name": "Bill Clinton Boulevard",
-   "local": "Bulevardi Bill Klinton",
-   "kind": "Boulevard",
-   "anchor": {"lat": 42.655404, "lon": 21.156962},
-   "summary": "One of Prishtinë's main boulevards and the northern edge of Dardania; it used to be Lenin Street. After the 1998–99 war it was renamed to thank former US President Bill Clinton, and an 11-foot statue of him was unveiled on the boulevard in November 2009 with Clinton attending.",
-   "links": [
-    {"title": "Bill Clinton Boulevard", "url": "https://en.wikipedia.org/wiki/Bill_Clinton_Boulevard", "lang": "en"},
-    {"title": "Dardania (Prishtinë)", "url": "https://sq.wikipedia.org/wiki/Dardania_(Prishtin%C3%AB)", "lang": "sq"}
-   ]
-  },
-  {
-   "id": "deshmoret_blvd",
-   "name": "Boulevard of the Nation's Martyrs",
-   "local": "Bulevardi Dëshmorët e Kombit",
-   "kind": "Boulevard",
-   "anchor": {"lat": 42.652592, "lon": 21.158931},
-   "summary": "The main boulevard along Dardania's south-east side, formerly Marshal Tito Street. It carries most of the bus lines through this part of the city.",
-   "links": [
-    {"title": "Dardania (Prishtinë)", "url": "https://sq.wikipedia.org/wiki/Dardania_(Prishtin%C3%AB)", "lang": "sq"}
-   ]
-  },
-  {
-   "id": "dardania",
-   "name": "Dardania",
-   "local": "Lagjja Dardania",
-   "kind": "Neighbourhood",
-   "anchor": {"lat": 42.6518389, "lon": 21.1536972},
-   "summary": "A central neighbourhood between Bill Clinton Boulevard and Dëshmorët e Kombit Boulevard. In 1946 it was a patch of private houses on the edge of a much smaller town; it was rebuilt as one of three planned modernist neighbourhoods (with Bregu i Diellit and Ulpiana), which is where the long apartment blocks come from.",
-   "links": [
-    {"title": "Dardania (Prishtinë)", "url": "https://sq.wikipedia.org/wiki/Dardania_(Prishtin%C3%AB)", "lang": "sq"},
-    {"title": "Pristina", "url": "https://en.wikipedia.org/wiki/Pristina", "lang": "en"}
-   ]
-  },
-  {
-   "id": "ulpiana",
-   "name": "Ulpiana",
-   "local": "Lagjja Ulpiana",
-   "kind": "Neighbourhood",
-   "anchor": {"lat": 42.652458, "lon": 21.160589},
-   "summary": "A neighbourhood built in the same modernist plan as Dardania; its apartment blocks carry letter-and-number names like U1, A6 and C4. It is named after Ulpiana, an important Roman city about 12 km south-east of Prishtinë that is now an archaeological park.",
-   "links": [
-    {"title": "Ulpiana (the Roman city)", "url": "https://en.wikipedia.org/wiki/Ulpiana", "lang": "en"},
-    {"title": "Dardania (Prishtinë)", "url": "https://sq.wikipedia.org/wiki/Dardania_(Prishtin%C3%AB)", "lang": "sq"},
-    {"title": "Prishtina", "url": "https://sq.wikipedia.org/wiki/Prishtina", "lang": "sq"}
-   ]
-  },
-  {
-   "id": "library",
-   "name": "Hivzi Sylejmani Library",
-   "local": "Biblioteka Komunale \"Hivzi Sylejmani\"",
-   "kind": "Library · heritage monument",
-   "anchor": {"osm": "way/381814742"},
-   "summary": "Prishtinë's municipal library, named after the Albanian writer Hivzi Sylejmani; the city library carried his name for decades. The building is listed as an architectural cultural-heritage monument.",
-   "links": [
-    {"title": "Biblioteka Hivzi Sylejmani", "url": "https://sq.wikipedia.org/wiki/Biblioteka_Hivzi_Sylejmani", "lang": "sq"},
-    {"title": "Hivzi Sylejmani", "url": "https://en.wikipedia.org/wiki/Hivzi_Sylejmani", "lang": "en"}
-   ]
-  },
-  {
-   "id": "dole",
-   "name": "Bob Dole memorial",
-   "local": "Robert Joseph Dole",
-   "kind": "Memorial",
-   "anchor": {"lat": 42.6552449, "lon": 21.1555267},
-   "summary": "Memorial to US Senator Bob Dole (1923–2021), who lobbied for Kosovo Albanians before, during and after the 1998–99 war. The street beside it, Rruga Robert Doll, also carries his name.",
-   "links": [
-    {"title": "Bob Dole", "url": "https://en.wikipedia.org/wiki/Bob_Dole", "lang": "en"}
-   ]
-  },
-  {
-   "id": "dunant",
-   "name": "Henry Dunant monument",
-   "local": "Henry Dunant",
-   "kind": "Monument",
-   "anchor": {"lat": 42.6522105, "lon": 21.1608019},
-   "summary": "Monument to Henry Dunant (1828–1910), the Swiss humanitarian who co-founded the Red Cross and won the first Nobel Peace Prize in 1901.",
-   "links": [
-    {"title": "Henry Dunant", "url": "https://en.wikipedia.org/wiki/Henry_Dunant", "lang": "en"}
-   ]
-  },
-  {
-   "id": "kostt",
-   "name": "KOSTT",
-   "local": "Operatori i Sistemit, Transmisionit dhe Tregut",
-   "kind": "Company headquarters",
-   "anchor": {"osm": "way/150550542"},
-   "summary": "Head office of KOSTT, which runs Kosovo's high-voltage electricity transmission grid and its electricity market.",
-   "links": [
-    {"title": "KOSTT", "url": "https://en.wikipedia.org/wiki/KOSTT", "lang": "en"},
-    {"title": "KOSTT", "url": "https://sq.wikipedia.org/wiki/KOSTT", "lang": "sq"}
-   ]
-  },
-  {
-   "id": "keds",
-   "name": "KEDS",
-   "local": "Kompania Kosovare për Shpërndarje të Energjisë Elektrike",
-   "kind": "Company offices",
-   "anchor": {"osm": "way/105552985"},
-   "summary": "Kosovo's electricity distribution company. Founded in 2009, it became independent of the Kosovo Energy Corporation in May 2013 and is owned by the Turkish companies Çalık Holding and Limak.",
-   "links": [
-    {"title": "KEDS", "url": "https://sq.wikipedia.org/wiki/KEDS", "lang": "sq"},
-    {"title": "Electricity sector in Kosovo", "url": "https://en.wikipedia.org/wiki/Electricity_sector_in_Kosovo", "lang": "en"}
-   ]
-  },
-  {
-   "id": "tax",
-   "name": "Tax Administration of Kosovo",
-   "local": "Administrata Tatimore e Kosovës",
-   "kind": "Government head office",
-   "anchor": {"osm": "way/597795543"},
-   "summary": "Head office of the ATK, Kosovo's tax authority: an executive agency with full operational autonomy within the Ministry of Finance.",
-   "links": [
-    {"title": "Administrata Tatimore e Kosovës", "url": "https://sq.wikipedia.org/wiki/Administrata_Tatimore_e_Kos%C3%ABv%C3%ABs", "lang": "sq"}
-   ]
-  },
-  {
-   "id": "universum",
-   "name": "Universum College",
-   "local": "Kolegji Universum",
-   "kind": "University",
-   "anchor": {"osm": "way/105324839"},
-   "summary": "A university in Prishtinë, founded in 2005.",
-   "links": [
-    {"title": "Universum College", "url": "https://en.wikipedia.org/wiki/Universum_College", "lang": "en"}
-   ]
-  },
-  {
-   "id": "ipko",
-   "name": "IPKO Foundation",
-   "local": "IPKO Foundation",
-   "kind": "Foundation",
-   "anchor": {"osm": "way/105552984"},
-   "summary": "Foundation carrying the name of IPKO, Kosovo's second-largest mobile operator (owned by Telekom Slovenije).",
-   "links": [
-    {"title": "IPKO", "url": "https://en.wikipedia.org/wiki/IPKO", "lang": "en"}
-   ]
-  },
-  {
-   "id": "bishopric",
-   "name": "Catholic bishopric offices",
-   "local": "Ipeshkvia e Kosovës",
-   "kind": "Church offices",
-   "anchor": {"osm": "way/105555663"},
-   "summary": "Mapped in OpenStreetMap as offices of Kosovo's Catholic bishopric. Kosovo's Catholics belong to the Diocese of Prizren and Pristina, set up in 2000 and made a full diocese in 2018.",
-   "links": [
-    {"title": "Diocese of Prizren-Pristina", "url": "https://en.wikipedia.org/wiki/Roman_Catholic_Diocese_of_Prizren-Pristina", "lang": "en"}
-   ]
-  },
-  {
-   "id": "british_council",
-   "name": "British Council",
-   "local": "British Council",
-   "kind": "Cultural institute",
-   "anchor": {"osm": "way/124915145"},
-   "summary": "Office of the British Council, the UK's organisation for international cultural and educational relations and English teaching.",
-   "links": [
-    {"title": "British Council", "url": "https://en.wikipedia.org/wiki/British_Council", "lang": "en"}
-   ]
-  },
-  {
-   "id": "finland",
-   "name": "Embassy of Finland",
-   "local": "Ambasada Finlandeze",
-   "kind": "Embassy",
-   "anchor": {"osm": "way/124915159"},
-   "summary": "Finland's embassy in Kosovo; OpenStreetMap places the Embassy of Sweden in the same building. There's no Wikipedia article about the embassy itself.",
-   "links": [
-    {"title": "Embassy of Finland, Pristina (Wikidata)", "url": "https://www.wikidata.org/wiki/Q106292173", "lang": "wikidata"}
-   ]
-  }
- ]
+  "about": "Landmarks in Marigona Residence, researched in November 2026 from news, hotel and school listings and OpenStreetMap. Summaries are written for this map from those sources; follow the links for more. Anchors: 'osm' = a clickable building (its OSM way), otherwise a label point.",
+  "landmarks": [
+    {
+      "id": "marigona", "name": "Marigona Residence", "local": "Marigona Rezidence", "kind": "Gated neighbourhood",
+      "anchor": {"lat": 42.5853, "lon": 21.1088},
+      "summary": "A self-contained villa estate in Preoc, just south of Prishtinë, with its own shops, cafés, a hotel and an international school around a central square. Prishtina Insight called it the best known of Kosovo's exclusive gated neighbourhoods, with homes selling for roughly €200,000–500,000.",
+      "links": [{"title": "Prishtina Insight on Kosovo's gated neighbourhoods", "url": "https://prishtinainsight.com/?p=19226", "lang": "en"}]
+    },
+    {
+      "id": "four_points", "name": "Four Points by Sheraton", "local": "Four Points by Sheraton Prishtina City", "kind": "Hotel",
+      "anchor": {"osm": "way/794762095"},
+      "summary": "Marriott-brand hotel at the estate's centre (California street 52): 87 rooms on five floors, with meeting rooms used for conferences and events.",
+      "links": [
+        {"title": "Four Points by Sheraton Prishtina City (Marriott)", "url": "https://www.marriott.com/en-us/hotels/prnfp-four-points-prishtina-city", "lang": "en"},
+        {"title": "Venue listing (floors, rooms)", "url": "https://www.successfulmeetings.com/Meeting-Event-Venues/Pristina-Kosovo/Convention-Hotel/Four-Points-by-Sheraton-Prishtina-City-p55329599", "lang": "en"}
+      ]
+    },
+    {
+      "id": "isp", "name": "International School of Prishtina", "local": "ISP", "kind": "Private school",
+      "anchor": {"osm": "way/428258219"},
+      "summary": "Private international day school on the estate, run by Mehmet Akif Schools according to OpenStreetMap; school directories list it for ages 6–18.",
+      "links": [
+        {"title": "OpenStreetMap", "url": "https://www.openstreetmap.org/way/428258219", "lang": "en"},
+        {"title": "International school directory listing", "url": "https://www.internationalschoolsearch.com/listing/international-school-of-prishtina-kosovo", "lang": "en"}
+      ]
+    }
+  ]
 }

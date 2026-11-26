@@ -16,22 +16,16 @@ next-env.d.ts
 
 # Google-derived and generated data: never commit (licensing + size)
 /public/data/
-pipeline/tiles_raw/
-pipeline/tiles_styled/
-pipeline/tiles_night/
-pipeline/aux/
-pipeline/variants/
-pipeline/logs/
-pipeline/*.png
-pipeline/*.npy
-pipeline/*.json
-# hand-curated, not Google-derived: commit these
-!pipeline/landmarks.json
-!pipeline/bus_schedule.json
-pipeline/*.last
-pipeline/small_prishtine*.html
-pipeline/google_tile_*.png
-osm-prototype/*.png
-osm-prototype/*.json
+/pipeline/*
+!/pipeline/export_web.py
+!/pipeline/backdrop.mjs
+!/pipeline/backdrop.py
+!/pipeline/perimeter.py
+!/pipeline/grid.html
+# hand-curated, not Google-derived: commit it
+!/pipeline/landmarks.json
 *.log
 .DS_Store
+
+# macOS app (contains the map imagery: never commit)
+/macos/build/

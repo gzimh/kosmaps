@@ -1,3 +1,4 @@
+import type { PerimeterInfo } from "./map/perimeterBlur";
 import type { PyramidInfo } from "./map/renderer";
 import type { DataTileInfo } from "./map/tiles";
 
@@ -44,6 +45,10 @@ export interface MapMeta {
   pyramid: PyramidInfo;
   /** CPU data tiles under data/tiles/<name>/<x>_<y>.png. */
   data: { idmap: DataTileInfo; height?: DataTileInfo };
+  /** Optional: surroundings under the map (pipeline/backdrop.py), covering rect (image px). */
+  backdrop?: { file: string; rect: [number, number, number, number] };
+  /** Optional: the neighbourhood's perimeter (pipeline/perimeter.py), for the blur layer. */
+  perimeter?: PerimeterInfo;
   layers: {
     buildings: string;
     /** Optional: road graph for simulated traffic (pipeline/build_roads.py). */
@@ -54,26 +59,7 @@ export interface MapMeta {
     landmarks?: string;
     /** Optional: parked cars as 3D objects (pipeline/build_parking.py). */
     parkedCars?: string;
-    /** Optional: bus lines, stops and timetables (pipeline/build_buses.py). */
-    buses?: string;
   };
-}
-
-/** public/data/meta.json: the world map (pipeline/build_worldmap.py) — one tile pyramid, several areas. */
-export interface WorldMeta {
-  lat: number;
-  lon: number;
-  mpp: number;
-  /** World image size (px); the pyramid is sparse inside it. */
-  width: number;
-  height: number;
-  credits: string;
-  tiles: string;
-  pyramid: PyramidInfo;
-  /** World px rectangle [x0, y0, x1, y1] the first view fits. */
-  home: [number, number, number, number];
-  /** Each area's own data folder (an export_web.py export) and where its mosaic sits in the world. */
-  areas: { id: string; name: string; data: string; offset: [number, number]; size: number }[];
 }
 
 export interface Weather {

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleName</key>
+	<string>Marigona</string>
+	<key>CFBundleDisplayName</key>
+	<string>Marigona</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.kosmaps.marigona</string>
+	<key>CFBundleExecutable</key>
+	<string>Marigona</string>
+	<key>CFBundleIconFile</key>
+	<string>AppIcon</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0</string>
+	<key>CFBundleVersion</key>
+	<string>__VERSION__</string>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.lifestyle</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>14.0</string>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>NSPrincipalClass</key>
+	<string>NSApplication</string>
+	<key>NSHumanReadableCopyright</key>
+	<string>Private prototype. Map imagery © Google; roads © OpenStreetMap contributors; weather by Open-Meteo.</string>
+</dict>
+</plist>

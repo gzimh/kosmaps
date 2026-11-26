@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Small Prishtinë — live prototype",
-  description: "An illustrated, live miniature map of Prishtinë.",
+  title: "Marigona — live",
+  description: "Marigona, illustrated, with live sun, weather and traffic.",
   // Private prototype built on Google-derived imagery: keep it out of search engines.
   robots: { index: false, follow: false },
 };

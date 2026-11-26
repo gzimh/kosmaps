@@ -13,18 +13,6 @@ import type { Lane, RoadNetwork } from "./network";
  *   removed there, so it always comes out the other side.
  */
 
-/** Route-following state for a scheduled vehicle (bus), driven by BusSystem. */
-export interface BusDrive {
-  /** Lane ids of its path through the map. */
-  route: number[];
-  /** Index of the car's current lane in `route`. */
-  idx: number;
-  /** Desired speed set by the schedule controller (m/s), or null for the lane's normal speed. */
-  vCap: number | null;
-  /** Where to stop next (a bus stop), as a lane id + distance along it. */
-  stopAt: { lane: number; s: number } | null;
-}
-
 export interface Car {
   id: number;
   lane: number;
@@ -35,7 +23,7 @@ export interface Car {
   len: number;
   width: number;
   height: number;
-  kind: "car" | "van" | "bus";
+  kind: "car" | "van";
   color: string;
   /** Personal speed factor (some drive faster than others). */
   drive: number;
@@ -45,9 +33,6 @@ export interface Car {
   /** Pulling into a dead end to park: fades out once stopped. */
   parking: boolean;
   stuck: number;
-  bus?: BusDrive;
-  /** Text painted on the roof (a bus's line number). */
-  label?: string;
   /** A parked car: static scenery, drawn like traffic but never simulated (no lights at night). */
   parked?: boolean;
   /** Smoothed render state (hides the small hop between lane offsets at junctions). */
@@ -173,25 +158,6 @@ export class TrafficSim {
     return car;
   }
 
-  /** Put a scheduled bus on the road (BusSystem decides where and when). */
-  addBus(drive: BusDrive, s: number, v: number, color: string, label: string, presence = 1): Car {
-    const laneId = drive.route[drive.idx];
-    const ln = this.net.lanes[laneId];
-    const p = this.net.sample(ln, s);
-    const car: Car = {
-      id: this.nextId++, lane: laneId, s, v, acc: 0, next: -1,
-      len: 12, width: 2.5, height: 3.1, kind: "bus", color,
-      drive: 1, presence, leaving: false, parking: false, stuck: 0,
-      re: p.e, rn: p.n, rh: p.h, rhead: p.head, visible: 1, bus: drive, label,
-    };
-    // make room: cars overlapping the bus's spot are moved out of the way (only happens on a reseed)
-    for (const c of [...this.byLane[laneId]]) if (Math.abs(c.s - s) < 14 && c.kind !== "bus") this.remove(c);
-    car.next = this.chooseNext(ln, car);
-    this.cars.push(car);
-    this.byLane[laneId].push(car);
-    return car;
-  }
-
   remove(c: Car) {
     const i = this.cars.indexOf(c);
     if (i >= 0) this.cars.splice(i, 1);
@@ -201,7 +167,6 @@ export class TrafficSim {
   }
 
   private chooseNext(ln: Lane, car: Car): number {
-    if (car.bus) return car.bus.route[car.bus.idx + 1] ?? -1;
     if (ln.endsAtBoundary || !ln.out.length) return -1;
     if (car.leaving && ln.endsAtDeadEnd) return -1;   // park here
     const opts = ln.out.filter((id) => id !== ln.reverse);
@@ -274,9 +239,7 @@ export class TrafficSim {
       }
       for (let k = 0; k < list.length; k++) {
         const c = list[k];
-        const v0 = c.bus?.vCap != null
-          ? Math.max(0.5, Math.min(c.bus.vCap, ln.vmax * 1.05) * inputs.speedFactor)
-          : Math.max(1, ln.vmax * c.drive * inputs.speedFactor);
+        const v0 = Math.max(1, ln.vmax * c.drive * inputs.speedFactor);
         // closest obstacle ahead: car on this lane, car on the next lane, a red light or a give-way line
         let gap = Infinity, vLead = 0;
         if (k + 1 < list.length) {
@@ -293,12 +256,6 @@ export class TrafficSim {
           }
         }
         const toEnd = ln.len - c.s;
-        const stop = c.bus?.stopAt;
-        if (stop) {
-          // bus stop: stop with the front of the bus at the stop
-          const toStop = stop.lane === c.lane ? stop.s - c.s : stop.lane === c.next ? toEnd + stop.s : Infinity;
-          if (toStop > -1 && toStop < gap) { gap = Math.max(0.1, toStop + S0); vLead = 0; }
-        }
         if (c.next < 0 && !ln.endsAtBoundary) {
           // parking at a dead end: stop just before its end
           const toPark = toEnd - 1.5;
@@ -337,14 +294,14 @@ export class TrafficSim {
         continue;
       }
       c.presence = Math.min(1, c.presence + dt / PARK_FADE);
-      if (!c.bus && c.stuck > 60 && !c.leaving) this.makeLeave(c);   // rare gridlock: give up and head off
-      if (!c.bus && c.stuck > 240) c.parking = true;                   // last resort for a true deadlock
+      if (c.stuck > 60 && !c.leaving) this.makeLeave(c);   // rare gridlock: give up and head off
+      if (c.stuck > 240) c.parking = true;                   // last resort for a true deadlock
       let ln = lanes[c.lane];
       // arrived at the dead end it is parking in (IDM keeps S0 before the stop line, so allow for it)
-      if (!c.bus && c.next < 0 && !ln.endsAtBoundary && ln.len - c.s < S0 + 4 && c.v < 0.5) { c.parking = true; continue; }
+      if (c.next < 0 && !ln.endsAtBoundary && ln.len - c.s < S0 + 4 && c.v < 0.5) { c.parking = true; continue; }
       while (c.s >= ln.len) {
         if (c.next < 0) {
-          if (ln.endsAtBoundary || c.bus) removed.add(c);
+          if (ln.endsAtBoundary) removed.add(c);
           else { c.s = ln.len - 0.1; c.v = 0; c.parking = true; }
           break;
         }
@@ -354,10 +311,9 @@ export class TrafficSim {
         c.lane = c.next;
         this.byLane[c.lane].push(c);
         ln = lanes[c.lane];
-        if (c.bus) c.bus.idx++;
         c.next = this.chooseNext(ln, c);
         // surplus cars on side streets head off the map
-        if (!c.leaving && !c.bus && (ln.cls === "service" || ln.cls === "residential") && this.surplus.has(ln.cls) && this.rand() < 0.4) {
+        if (!c.leaving && (ln.cls === "service" || ln.cls === "residential") && this.surplus.has(ln.cls) && this.rand() < 0.4) {
           this.makeLeave(c);
         }
       }
@@ -384,7 +340,7 @@ export class TrafficSim {
 
   private rebalance(demand: number) {
     const lanes = this.net.lanes;
-    const active = this.cars.filter((c) => !c.leaving && !c.bus);
+    const active = this.cars.filter((c) => !c.leaving);
     const target = this.targetCount(demand);
     const n = active.length;
 
@@ -429,7 +385,6 @@ export class TrafficSim {
   }
 
   private makeLeave(c: Car) {
-    if (c.bus) return;
     c.leaving = true;
     c.next = this.chooseNext(this.net.lanes[c.lane], c);
   }

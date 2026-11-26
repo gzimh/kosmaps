@@ -1,4 +1,4 @@
-import type { ViewLike } from "./areaView";
+import type { ViewLike } from "./renderer";
 
 /** public/data/landmarks.json (curated in pipeline/landmarks.json, positioned by export_web.py). */
 export interface Landmark {

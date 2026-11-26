@@ -1,5 +1,5 @@
 import type { Building, BuildingsFile } from "../types";
-import type { ViewLike } from "./areaView";
+import type { ViewLike } from "./renderer";
 import type { TiledData } from "./tiles";
 
 const S2 = Math.SQRT1_2;

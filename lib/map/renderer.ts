@@ -1,4 +1,4 @@
-import { FRAGMENT_SHADER, VERTEX_SHADER } from "./shaders";
+import { BACKDROP_SHADER, FRAGMENT_SHADER, VERTEX_SHADER } from "./shaders";
 import type { TileLoader } from "./tiles";
 
 /** One layer's pyramid: level z has finest * 2^(maxZ - z) mosaic px per tile px. */
@@ -56,7 +56,19 @@ const MAX_SCALE = 4;
  * View state is in device pixels: `off` is the image pixel at the canvas origin,
  * `scale` is device px per image px.
  */
-export class MapRenderer {
+/** What overlay drawing code needs from the view (canvas size, zoom, projection). */
+export interface ViewLike {
+  readonly dpr: number;
+  readonly scale: number;
+  readonly width: number;
+  readonly height: number;
+  /** Image px at the canvas origin. */
+  readonly off: [number, number];
+  /** Image px -> canvas device px. */
+  toCanvas(ix: number, iy: number): [number, number];
+}
+
+export class MapRenderer implements ViewLike {
   readonly gl: WebGL2RenderingContext;
   private prog: WebGLProgram;
   private uniforms = new Map<string, WebGLUniformLocation | null>();
@@ -67,6 +79,10 @@ export class MapRenderer {
   private frameNo = 0;
   private pyr: PyramidInfo | null = null;
   private format = "webp";
+  private backProg: WebGLProgram;
+  private backdrop: { tex: WebGLTexture; rect: [number, number, number, number] } | null = null;
+  /** The camera stays inside this image px rectangle (null = free). */
+  private bounds: [number, number, number, number] | null = null;
   private baseUrl = "";
   private loader: TileLoader | null = null;
   private readyResolve: (() => void) | null = null;
@@ -85,35 +101,67 @@ export class MapRenderer {
 
   constructor(private canvas: HTMLCanvasElement) {
     this.ready = new Promise((r) => { this.readyResolve = r; });
-    const gl = canvas.getContext("webgl2", { antialias: false, premultipliedAlpha: false });
+    const gl = canvas.getContext("webgl2", { antialias: false, premultipliedAlpha: true });
     if (!gl) throw new Error("WebGL2 is not available in this browser.");
     this.gl = gl;
     const compile = (type: number, src: string) => {
-      const s = gl.createShader(type)!;
-      gl.shaderSource(s, src);
-      gl.compileShader(s);
-      if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s) ?? "shader error");
-      return s;
+      const sh = gl.createShader(type)!;
+      gl.shaderSource(sh, src);
+      gl.compileShader(sh);
+      if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(sh) ?? "shader error");
+      return sh;
     };
-    const prog = gl.createProgram()!;
-    gl.attachShader(prog, compile(gl.VERTEX_SHADER, VERTEX_SHADER));
-    gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FRAGMENT_SHADER));
-    gl.linkProgram(prog);
-    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog) ?? "link error");
-    gl.useProgram(prog);
-    this.prog = prog;
+    const link = (fs: string) => {
+      const prog = gl.createProgram()!;
+      gl.attachShader(prog, compile(gl.VERTEX_SHADER, VERTEX_SHADER));
+      gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, fs));
+      gl.bindAttribLocation(prog, 0, "p");
+      gl.linkProgram(prog);
+      if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog) ?? "link error");
+      return prog;
+    };
+    this.backProg = link(BACKDROP_SHADER);
+    this.prog = link(FRAGMENT_SHADER);
+    gl.useProgram(this.prog);
 
     this.buffer = gl.createBuffer()!;
     gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0, 1, 0, 0, 1, 1, 1]), gl.STATIC_DRAW);
-    const loc = gl.getAttribLocation(prog, "p");
-    gl.enableVertexAttribArray(loc);
-    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
   }
 
   private u(name: string) {
     if (!this.uniforms.has(name)) this.uniforms.set(name, this.gl.getUniformLocation(this.prog, name));
     return this.uniforms.get(name)!;
+  }
+
+  /**
+   * A picture under the whole map (the blurred photo around the illustration), covering `rect`
+   * (image px). The camera is kept inside `rect`, which also limits how far it zooms out.
+   */
+  setBackdrop(img: ImageBitmap, rect: [number, number, number, number]) {
+    const gl = this.gl;
+    if (this.backdrop) gl.deleteTexture(this.backdrop.tex);
+    this.backdrop = { tex: this.upload(img), rect };
+    this.bounds = rect;
+  }
+
+  /** Keep the camera inside the bounds: no zooming out past them, no panning off them. */
+  private clampView() {
+    const b = this.bounds;
+    if (!b) return;
+    const bw = b[2] - b[0], bh = b[3] - b[1];
+    const fit = Math.max(this.width / bw, this.height / bh);
+    this.minScale = fit;
+    if (this.scale < fit) {
+      // zoom in about the view's centre
+      const cx = this.off[0] + this.width / this.scale / 2, cy = this.off[1] + this.height / this.scale / 2;
+      this.scale = fit;
+      this.off = [cx - this.width / fit / 2, cy - this.height / fit / 2];
+    }
+    const vw = this.width / this.scale, vh = this.height / this.scale;
+    this.off = [Math.min(b[2] - vw, Math.max(b[0], this.off[0])), Math.min(b[3] - vh, Math.max(b[1], this.off[1]))];
   }
 
   /** Use a tile pyramid; tiles are fetched on demand through `loader`. */
@@ -135,7 +183,7 @@ export class MapRenderer {
     gl.bindTexture(gl.TEXTURE_2D, this.dummy);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 0]));
     gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);   // the shader outputs premultiplied colour
     gl.uniform1i(this.u("uDay"), 0);
     gl.uniform1i(this.u("uNight"), 1);
     gl.uniform1i(this.u("uUp"), 2);
@@ -211,7 +259,11 @@ export class MapRenderer {
     this.scale = Math.min(width / (x1 - x0), height / (y1 - y0)) * 0.96;
     this.minScale = Math.min(0.08, Math.min(width / this.imageW, height / this.imageH) * 0.8);
     this.off = [(x0 + x1) / 2 - width / this.scale / 2, (y0 + y1) / 2 - height / this.scale / 2];
+    this.clampView();
   }
+
+  /** The furthest the camera can zoom out (device px per image px). */
+  get minZoom() { return this.minScale; }
 
   /** Centre the view on an image point at a given scale (device px per image px). */
   lookAt(ix: number, iy: number, scale = this.scale) {
@@ -247,11 +299,34 @@ export class MapRenderer {
   draw(f: FrameUniforms) {
     const gl = this.gl, pyr = this.pyr;
     this.frameNo++;
+    this.clampView();
     const bg = [0.94 + (0.10 - 0.94) * f.nightK, 0.91 + (0.10 - 0.91) * f.nightK, 0.85 + (0.14 - 0.85) * f.nightK];
     gl.clearColor(bg[0], bg[1], bg[2], 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
     if (!pyr) return;
     this.loader?.tick();
+
+    if (this.backdrop) {
+      // the surroundings first, the illustration on top
+      const bp = this.backProg, ub = (n: string) => gl.getUniformLocation(bp, n);
+      gl.useProgram(bp);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, this.backdrop.tex);
+      const [x0, y0, x1, y1] = this.backdrop.rect;
+      const [rx0, ry0] = this.toCanvas(x0, y0), [rx1, ry1] = this.toCanvas(x1, y1);
+      gl.uniform4f(ub("uRect"), rx0, ry0, rx1, ry1);
+      gl.uniform4f(ub("uBack"), x0, y0, x1, y1);
+      gl.uniform2f(ub("uRes"), this.width, this.height);
+      gl.uniform2f(ub("uOff"), this.off[0], this.off[1]);
+      gl.uniform1f(ub("uScale"), this.scale);
+      gl.uniform1f(ub("uNightK"), f.nightK);
+      gl.uniform1f(ub("uRain"), f.rain);
+      gl.uniform1f(ub("uSnow"), f.snow);
+      gl.uniform1f(ub("uSmog"), f.smog);
+      gl.uniform1i(ub("uTex"), 0);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      gl.useProgram(this.prog);
+    }
 
     gl.uniform2f(this.u("uRes"), this.width, this.height);
     gl.uniform2f(this.u("uOff"), this.off[0], this.off[1]);
@@ -335,5 +410,7 @@ export class MapRenderer {
     this.tex.clear();
     gl.deleteBuffer(this.buffer);
     gl.deleteProgram(this.prog);
+    gl.deleteProgram(this.backProg);
+    if (this.backdrop) gl.deleteTexture(this.backdrop.tex);
   }
 }

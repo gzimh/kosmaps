@@ -7,7 +7,7 @@ Everything tiled goes under tiles/<version>/ (a new version per export), so brow
 tiles for a year without ever showing stale ones; meta.json (not cached) says which version.
 
 Imagery -> tiles/<v>/<layer>/<z>/<x>_<y>.{avif,webp}, one pyramid per layer:
-  day, night  from mosaic_*_2x.png when present (Real-ESRGAN 2x, see upscale.py): the finest level
+  day, night  from mosaic_*_2x.png when present (Real-ESRGAN 2x, see upscale.py in git history): the finest level
               has 2 tile px per mosaic px
   up          the sky-facing mask is smooth, so it is stored at half resolution
   z = 0 is the coarsest level, each level doubles the resolution of the one before. Every tile is
@@ -16,7 +16,7 @@ Imagery -> tiles/<v>/<layer>/<z>/<x>_<y>.{avif,webp}, one pyramid per layer:
   AVIF decoding.
 Data layers, read on the CPU (lossless PNG, one level):
   tiles/<v>/idmap/<x>_<y>.png   building index per mosaic pixel (R + 256 G)
-  tiles/<v>/height/<x>_<y>.png  surface height + solid flag at half resolution (see build_roads.py)
+  tiles/<v>/height/<x>_<y>.png  surface height + solid flag at half resolution (see build_roads.py in git history)
 """
 import json
 import math
@@ -31,8 +31,7 @@ TILE = 512
 GUTTER = 2
 DATA_TILE = 512          # data tiles cover DATA_TILE mosaic pixels
 
-# public/data itself holds the world map (build_worldmap.py); each area exports into its own folder
-out = sys.argv[1] if len(sys.argv) > 1 else os.path.join("..", "public", "data", "areas", "dardania")
+out = sys.argv[1] if len(sys.argv) > 1 else os.path.join("..", "public", "data")
 os.makedirs(out, exist_ok=True)
 for old in ("day.webp", "night.webp", "up.webp", "idmap.png", "height.png"):   # pre-tiling exports
     if os.path.exists(os.path.join(out, old)):
@@ -128,10 +127,6 @@ if os.path.exists("roads.json") and os.path.exists("height.png"):
     print("  roads.json (traffic)")
 else:
     print("  (no roads.json/height.png: run build_roads.py to enable simulated traffic)")
-if os.path.exists("buses.json"):
-    shutil.copyfile("buses.json", os.path.join(out, "buses.json"))
-    layers.update(buses="buses.json")
-    print("  buses.json (bus lines, stops, timetables)")
 if os.path.exists("parked_cars.json"):
     shutil.copyfile("parked_cars.json", os.path.join(out, "parked_cars.json"))
     layers.update(parkedCars="parked_cars.json")

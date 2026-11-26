@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- Marigona app icon, on the macOS icon grid (824px rounded square, 100px margin): a white tile
+       holding a green card with contour lines, roads and a dotted route, and a glass compass
+       overlapping its corner. Only gradients (no filters), so NSImage renders it faithfully. -->
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#efebe4"/>
+    </linearGradient>
+    <!-- the card: a soft "mesh" of greens, warming to orange and brown -->
+    <linearGradient id="card" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#b4e07e"/>
+      <stop offset="0.55" stop-color="#5aa457"/>
+      <stop offset="1" stop-color="#2f6e40"/>
+    </linearGradient>
+    <radialGradient id="glowTeal" cx="0.18" cy="0.2" r="0.55">
+      <stop offset="0" stop-color="#e4f59a" stop-opacity="0.6"/>
+      <stop offset="1" stop-color="#d6f08a" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowPink" cx="0.95" cy="0.05" r="0.5">
+      <stop offset="0" stop-color="#ff9233" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#ff9233" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowPeach" cx="0.05" cy="1" r="0.5">
+      <stop offset="0" stop-color="#ffb347" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#ffb347" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="cardClip"><rect x="178" y="178" width="668" height="668" rx="120"/></clipPath>
+
+    <!-- compass glass -->
+    <linearGradient id="bezel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.55" stop-color="#eee8df"/>
+      <stop offset="1" stop-color="#c4b6a4"/>
+    </linearGradient>
+    <linearGradient id="bezelInner" x1="1" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#cdbfad"/>
+    </linearGradient>
+    <radialGradient id="dial" cx="0.42" cy="0.38" r="0.7">
+      <stop offset="0" stop-color="#7a5236"/>
+      <stop offset="0.55" stop-color="#4a3020"/>
+      <stop offset="1" stop-color="#24170e"/>
+    </radialGradient>
+    <radialGradient id="dialGlow" cx="0.7" cy="0.75" r="0.45">
+      <stop offset="0" stop-color="#ff9a3c" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#ff9a3c" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="dialGlow2" cx="0.3" cy="0.25" r="0.4">
+      <stop offset="0" stop-color="#c98a52" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#c98a52" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="shine" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="shadow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#2b1b0f" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#2b1b0f" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- white tile -->
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#tile)"/>
+
+  <!-- green map card -->
+  <g clip-path="url(#cardClip)">
+    <rect x="178" y="178" width="668" height="668" fill="url(#card)"/>
+    <rect x="178" y="178" width="668" height="668" fill="url(#glowTeal)"/>
+    <rect x="178" y="178" width="668" height="668" fill="url(#glowPink)"/>
+    <rect x="178" y="178" width="668" height="668" fill="url(#glowPeach)"/>
+
+    <!-- contour lines around a hill -->
+    <g fill="none" stroke="#fff" stroke-width="7" opacity="0.5">
+      <path d="M330 300c70-40 170-20 200 40s-10 140-90 150-170-30-180-100 20-60 70-90Z"/>
+      <path d="M290 260c110-70 270-40 310 50s-10 220-140 230-250-40-260-140 30-100 90-140Z"/>
+      <path d="M240 225c150-100 370-70 420 60s-10 300-200 310-330-50-340-190 40-130 120-180Z"/>
+      <path d="M190 200c190-130 470-100 530 70s-10 380-260 390-410-60-420-240" opacity="0.7"/>
+      <path d="M610 640c50-20 120 0 140 50s-20 110-90 110" opacity="0.8"/>
+      <path d="M560 600c80-40 200-10 230 80" opacity="0.6"/>
+    </g>
+
+    <!-- roads -->
+    <g fill="none" stroke="#fff" stroke-linecap="round">
+      <path d="M150 640C300 600 380 680 520 620S720 470 880 500" stroke-width="22" opacity="0.85"/>
+      <path d="M640 150C610 300 660 420 600 560S560 760 590 880" stroke-width="14" opacity="0.7"/>
+    </g>
+
+    <!-- dotted route -->
+    <path d="M250 760C300 700 360 700 400 640S440 520 380 470 330 360 410 320" fill="none"
+          stroke="#fff" stroke-width="12" stroke-linecap="round" stroke-dasharray="0 30"/>
+    <circle cx="410" cy="320" r="20" fill="#fff"/>
+    <circle cx="410" cy="320" r="9" fill="#f26a1b"/>
+  </g>
+
+  <!-- glass compass overlapping the corner -->
+  <g transform="translate(16 16)">
+  <circle cx="706" cy="724" r="190" fill="url(#shadow)"/>
+  <circle cx="700" cy="700" r="160" fill="url(#bezel)"/>
+  <circle cx="700" cy="700" r="138" fill="url(#bezelInner)"/>
+  <circle cx="700" cy="700" r="124" fill="url(#dial)"/>
+  <circle cx="700" cy="700" r="124" fill="url(#dialGlow)"/>
+  <circle cx="700" cy="700" r="124" fill="url(#dialGlow2)"/>
+
+  <!-- ticks -->
+  <g stroke="#fff" stroke-linecap="round" opacity="0.75">
+    <path d="M700 590v18M700 792v18M590 700h18M792 700h18" stroke-width="7"/>
+    <g stroke-width="4" opacity="0.6">
+      <path d="M778 622l-9 9M622 622l9 9M622 778l9-9M778 778l-9-9"/>
+    </g>
+  </g>
+
+  <!-- needle, pointing north-east -->
+  <g transform="rotate(35 700 700)">
+    <path d="M700 612 726 700H674Z" fill="#f26a1b"/>
+    <path d="M700 612 700 700H674Z" fill="#ff9a4d"/>
+    <path d="M700 788 726 700H674Z" fill="#fbf8f2"/>
+    <path d="M700 788 700 700H674Z" fill="#d8cfc2"/>
+  </g>
+  <circle cx="700" cy="700" r="14" fill="#fbf8f2"/>
+  <circle cx="700" cy="700" r="6" fill="#4a3020"/>
+
+  <!-- glass reflection -->
+  <path d="M592 668a110 110 0 0 1 180-78c-60-14-130 10-180 78Z" fill="url(#shine)"/>
+  </g>
+</svg>
